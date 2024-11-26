@@ -2,8 +2,8 @@
 #![feature(proc_macro_span)]
 #![warn(clippy::panic, clippy::unwrap_used, clippy::expect_used, clippy::cargo)]
 
-use std::fs;
 use std::path::Path;
+use std::{env, fs};
 
 use litrs::StringLit;
 use proc_macro2::{self, TokenStream, TokenTree};
@@ -31,7 +31,10 @@ pub fn style(ts: proc_macro::TokenStream) -> proc_macro::TokenStream {
 pub fn style_sheet(ts: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let file_path = ts.to_string();
     let file_path = file_path.trim_matches('"');
-    let css_content = std::fs::read_to_string(file_path).expect("Expected to read file");
+    let mut current = env::current_dir().expect("No current dir found");
+    current.push(file_path);
+    let css_content = std::fs::read_to_string(current)
+        .expect(format!("Expected to read file: {}", current).as_str());
     let class = Class::rand_class_from_seed(css_content.to_string());
     let class = class.as_name();
     let expanded = quote! {
